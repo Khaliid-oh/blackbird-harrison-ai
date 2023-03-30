@@ -8,43 +8,120 @@ import Grid from '@mui/material/Grid';
 import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import logo from '../../assets/logo.svg';
+import EmailValidator from 'email-validator';
 
 
 export default function LoginForm() {
-  const [showAlert, setShowAlert] = useState(false);
+  const [showAlert, setShowAlert] = useState({display: false, type: ''});
+  const [notification, setNotification] = useState({emailError:'', passwordError:'', login:''})
+
+
   const validateForm = (event) => {
     event.preventDefault()
     const data = new FormData(event.currentTarget);
     const email = data.get('email');
     const password = data.get('password');
 
+
+    if (!email.trim()&&!password.trim()) {
+      setNotification({...notification, emailError: 'Please enter your email', passwordError: 'Please enter your password'})
+      setShowAlert({...showAlert, display: true, type:'email-password-error'})
+      setTimeout(() => {
+        setNotification({...notification, emailError: '', passwordError: ''})
+        setShowAlert({...showAlert, display: false, type:''})
+      }, 2000);
+        return false;
+  }
+    
+    if (!email.trim()) {
+        setNotification({...notification, emailError: 'Please enter your email'})
+        setShowAlert({...showAlert, display: true, type:'email-error'})
+        setTimeout(() => {
+          setNotification({...notification, emailError: ''})
+          setShowAlert({...showAlert, display: false, type:''})
+        }, 2000);
+          return false;
+    }
+    
+
+    if (!password.trim()) {
+      setNotification({...notification, passwordError: 'Please enter your password'})
+      setShowAlert({...showAlert, display: true, type:'password-error'})
+      setTimeout(() => {
+        setNotification({...notification, passwordError: ''})
+        setShowAlert({...showAlert, display: false, type:''})
+      }, 2000);
+      return false;
+    }
+
     // Add validation code here
 
+    const validateEmail = EmailValidator.validate(email) 
+    const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@$!%*?&-])[A-Za-z0-9@$!%*?&-]{8,}$/;
+    const validatePassword = regex.test(password)
+
+    if (!validateEmail&&!validatePassword) {
+      setNotification({...notification, emailError: 'Email is not valid', passwordError: 'Password is not valid'})
+      setShowAlert({...showAlert, display: true, type:'email-password-error'})
+      setTimeout(() => {
+        setNotification({...notification, emailError: '', passwordError: ''})
+        setShowAlert({...showAlert, display: false, type:''})
+      }, 3000);
+        return false;
   }
+    
+    if (!validateEmail) {
+        setNotification({...notification, emailError: 'Email is not valid'})
+        setShowAlert({...showAlert, display: true, type:'email-error'})
+        setTimeout(() => {
+          setNotification({...notification, emailError: ''})
+          setShowAlert({...showAlert, display: false, type:''})
+        }, 3000);
+        return false;
+    }
+    
+
+    if (!validatePassword) {
+      setNotification({...notification, passwordError: 'Password is not valid'})
+      setShowAlert({...showAlert, display: true, type:'password-error'})
+      setTimeout(() => {
+        setNotification({...notification, passwordError: ''})
+        setShowAlert({...showAlert, display: false, type:''})
+      }, 3000);
+      return false;
+    }
+    return true;
+
+  };
+
+  
+
 
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
-    validateForm(event);
-    setShowAlert("Login Successful");
-  };
+    
+    if (validateForm(event)) {
+      setShowAlert({...showAlert, display: true, type:'success'})
+      setTimeout(() => {
+        setShowAlert({...showAlert, display: false, type:''})
+      }, 3000);
+    }
+  
+  };   
 
   return (
     <>
-      {showAlert &&
+    
         <Snackbar
-          open={showAlert}
+          open={showAlert.display&&showAlert.type === 'success' ? true : false}
           autoHideDuration={6000}
-          onClose={() => setShowAlert(false)}
-          message={showAlert}
+  
+
         >
-          <Alert>{showAlert}</Alert>
+          <Alert>Login Successful</Alert>
         </Snackbar>
-      }
+  
       <Grid
         item
         xs={false}
@@ -81,6 +158,8 @@ export default function LoginForm() {
             <TextField
               margin="normal"
               required
+              error={showAlert.display&&showAlert.type  ==='email-password-error' ? true : showAlert.display&&showAlert.type  ==='email-error' ? true :  false }
+              helperText= {<div data-testid='test-id-email'>{notification.emailError}</div>} 
               fullWidth
               id="email"
               label="Email Address"
@@ -91,6 +170,8 @@ export default function LoginForm() {
             <TextField
               margin="normal"
               required
+              error={showAlert.display&&showAlert.type === 'email-password-error' ? true : showAlert.display&&showAlert.type === 'password-error' ? true : false}
+              helperText= {<div data-testid='test-id-password'>{notification.passwordError}</div>}
               fullWidth
               name="password"
               label="Password"
